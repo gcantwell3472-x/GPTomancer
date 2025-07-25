@@ -11,9 +11,10 @@ import shutil
 import subprocess
 import sys
 import uuid
-
+import re
 import yaml
 from transformers import AutoTokenizer
+from transformers import AutoModelForCausalLM
 
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -94,6 +95,84 @@ def copy_dataset_if_needed(dataset_path, file_format):
     return dataset_path
 
 
+def get_gpu_count():
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
+            capture_output=True, text=True, check=True
+        )
+        gpus = result.stdout.strip().split('\n')
+        return len(gpus)
+    except Exception as e:
+        return 0
+
+
+KNOWN_MODEL_PARAMS = {
+    "tinyllama_v1.1": 1_100_000_000,
+}
+
+def parse_param_count_from_name(model_name: str):
+    if not isinstance(model_name, str):
+        return None
+
+    for key, val in KNOWN_MODEL_PARAMS.items():
+        if key.lower() in model_name.lower():
+            return val
+
+    m = re.search(r'(?i)(\d+(?:\.\d+)?)\s*([mMbB])\b', model_name)
+    if not m:
+        return None
+
+    number_str, unit = m.group(1), m.group(2).upper()
+    try:
+        number = float(number_str)
+    except ValueError:
+        return None
+
+    if unit.lower() == 'm':
+        return int(number * 1_000_000)
+    elif unit.lower() == 'b':
+        return int(number * 1_000_000_000)
+    else:
+        return None
+
+def get_batch_size_by_model_size(model_name: str) -> int:
+    count = parse_param_count_from_name(model_name)
+    if count == None:
+        return None
+
+    params_in_billion = count / 1_000_000_000
+    if params_in_billion <= 0.5:
+        base_batch_size = 32
+    elif params_in_billion <= 1.6:
+        base_batch_size = 16
+    elif params_in_billion <= 7.1:
+        base_batch_size = 8
+    elif params_in_billion <= 9.1:
+        base_batch_size = 4
+    elif params_in_billion <= 14.1:
+        base_batch_size = 2
+    else:
+        base_batch_size = 1
+
+    if 'qwen' in model_name.lower():
+        base_batch_size = max(1, base_batch_size / 2)
+
+    return base_batch_size
+
+
+def get_learning_rate_by_batch_and_gpu(batch_size: int, gpu_count: int, base_learning_rate: float = 0.00008) -> float:
+    base_gpu_count = 8
+    base_batch_size = 8
+    
+    effective_batch_size = batch_size * gpu_count
+    base_effective_batch_size = base_batch_size * base_gpu_count
+
+    adjusted_learning_rate = base_learning_rate * (effective_batch_size / base_effective_batch_size)
+    
+    return adjusted_learning_rate
+
+
 def create_config(task_id, model, dataset, dataset_type, file_format, output_dir, expected_repo_name=None,
                 huggingface_username=None, huggingface_token=None, disable_upload=True):
     """Create the axolotl config file with appropriate settings."""
@@ -153,6 +232,14 @@ def create_config(task_id, model, dataset, dataset_type, file_format, output_dir
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     if tokenizer.pad_token_id is None and tokenizer.eos_token_id is not None:
         config["special_tokens"] = {"pad_token": tokenizer.eos_token}
+        
+    gpu_count = get_gpu_count()
+    if gpu_count > 1:
+        config["deepspeed"] = "zero2.json"
+    batch_size = get_batch_size_by_model_size(model)
+    if batch_size:
+        config["micro_batch_size"] = batch_size
+        config["learning_rate"] = get_learning_rate_by_batch_and_gpu(batch_size, gpu_count, config["base_learning_rate"])
 
     config_path = os.path.join("/workspace/axolotl/configs", f"{task_id}.yml")
     save_config(config, config_path)

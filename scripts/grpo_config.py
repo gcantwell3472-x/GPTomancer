@@ -1,60 +1,60 @@
 INSTRUCT_CONFIG = {
     "0_1_b": {
-        "lr": 0.0002,
+        "lr": 0.00025,
         "distributed": "ddp",
         "gpu_count": 1,
-        "batch_size": 8,
+        "batch_size": 10,
     },
     "1_2_b": {
-        "lr": 0.0002,
+        "lr": 0.00025,
         "distributed": "ddp",
         "gpu_count": 1,
         "batch_size": 10,
     },
     "2_4_b": {
-        "lr": 0.0002,
+        "lr": 0.00025,
         "distributed": "ddp",
         "gpu_count": 1,
         "batch_size": 8,
         "use_lora": True
     },
     "4_5_b": {
-        "lr": 0.0002,
+        "lr": 0.00025,
         "distributed": "ddp",
         "gpu_count": 2,
         "batch_size": 8,
         "use_lora": True
     },
     "5_9_b": {
-        "lr": 0.0002,
+        "lr": 0.00025,
         "distributed": "ddp",
         "gpu_count": 2,
         "batch_size": 4,
         "use_lora": True
     },
     "9_12_b": {
-        "lr": 0.0002,
+        "lr": 0.00025,
         "distributed": "ddp",
         "gpu_count": 2,
         "use_lora": True,
         "batch_size": 4,
     },
     "12_15_b": {
-        "lr": 0.0002,
+        "lr": 0.00025,
         "distributed": "ddp",
         "gpu_count": 4,
         "use_lora": True,
         "batch_size": 2,
     },
     "15_40_b": {
-        "lr": 0.0002,
+        "lr": 0.00025,
         "distributed": "ds",
         "gpu_count": 4,
         "use_lora": True,
         "batch_size": 1,
     },
     "40_80_b": {
-        "lr": 0.0002,
+        "lr": 0.00025,
         "distributed": "ds",
         "gpu_count": 8,
         "use_lora": True,

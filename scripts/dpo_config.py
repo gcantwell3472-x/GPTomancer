@@ -4,7 +4,7 @@ from copy import deepcopy
 
 DPO_CONFIG = {
     "0_1_b": {
-        "lr": 1.35e-5,
+        "lr": 1.4e-5,
         "distributed": "ddp",
         "gpu_count": 1,
         "batch_size": 16,
@@ -187,7 +187,7 @@ def get_training_json(train_info: dict) -> dict:
     param_nums = get_model_num_params(model_name, model_path)
     config = get_config(param_nums)
     run_config = {
-        "epoch_num": 3,
+        "epoch_num": 4,
         "batch_size": config["batch_size"],
         "learning_rate": config["lr"],
         "min_lr_rate": 0.25,

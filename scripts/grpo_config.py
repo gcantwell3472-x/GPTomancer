@@ -4,14 +4,14 @@ from copy import deepcopy
 
 GRPO_CONFIG = {
     "0_1_b": {
-        "lr": 0.00015,
+        "lr": 0.0002,
         "distributed": "ddp",
         "gpu_count": 1,
         "batch_size": 40,
         "vllm_gpu_memory_utilization": 0.4
     },
     "1_2_b": {
-        "lr": 7.5e-5,
+        "lr": 9.9e-5,
         "distributed": "ddp",
         "gpu_count": 1,
         "batch_size": 40,
@@ -227,7 +227,7 @@ def get_training_json(train_info: dict) -> dict:
     config = get_grpo_config(param_nums)
     print(f"config: {config}")
     run_config = {
-        "epoch_num": 3,
+        "epoch_num": 2,
         "batch_size": config["batch_size"],
         "learning_rate": config["lr"],
         "min_lr_rate": 0.25,

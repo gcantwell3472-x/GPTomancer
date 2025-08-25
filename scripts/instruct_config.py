@@ -39,7 +39,7 @@ INSTRUCT_CONFIG = {
         "batch_size": 40,
     },
     "5_9_b": {
-        "lr": 3.5e-5,
+        "lr": 5e-5,
         "distributed": "ddp",
         "gpu_count": 2,
         "batch_size": 28,
@@ -180,7 +180,7 @@ def get_training_json(train_info: dict) -> dict:
     param_nums = get_model_num_params(model_name, model_path)
     config = get_instruct_config(param_nums)
     run_config = {
-        "epoch_num": 4,
+        "epoch_num": 3,
         "batch_size": config["batch_size"],
         "learning_rate": config["lr"],
         "min_lr_rate": 0.25,
